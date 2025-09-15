@@ -14,16 +14,263 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          referral_code: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          vertical_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          referral_code: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          vertical_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          referral_code?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          vertical_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_vertical_id_fkey"
+            columns: ["vertical_id"]
+            isOneToOne: false
+            referencedRelation: "verticals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referee_id: string
+          referrer_id: string
+          reward_id: string | null
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referee_id: string
+          referrer_id: string
+          reward_id?: string | null
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referee_id?: string
+          referrer_id?: string
+          reward_id?: string | null
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_referrals_reward_id"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referee_id_fkey"
+            columns: ["referee_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_rules: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          expires_after_months: number
+          id: string
+          max_per_month: number
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount_percent: number
+          expires_after_months: number
+          id?: string
+          max_per_month: number
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          expires_after_months?: number
+          id?: string
+          max_per_month?: number
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_rules_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards: {
+        Row: {
+          created_at: string
+          customer_id: string
+          discount_percent: number
+          expires_at: string
+          id: string
+          service_id: string
+          used: boolean
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          discount_percent: number
+          expires_at: string
+          id?: string
+          service_id: string
+          used?: boolean
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          discount_percent?: number
+          expires_at?: string
+          id?: string
+          service_id?: string
+          used?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rewards_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rewards_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          tier: Database["public"]["Enums"]["service_tier"]
+          updated_at: string
+          vertical_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          tier: Database["public"]["Enums"]["service_tier"]
+          updated_at?: string
+          vertical_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          tier?: Database["public"]["Enums"]["service_tier"]
+          updated_at?: string
+          vertical_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_vertical_id_fkey"
+            columns: ["vertical_id"]
+            isOneToOne: false
+            referencedRelation: "verticals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      verticals: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_referral_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_current_user_vertical: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "customer" | "admin"
+      service_tier: "simple" | "medium" | "complex"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +397,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["customer", "admin"],
+      service_tier: ["simple", "medium", "complex"],
+    },
   },
 } as const

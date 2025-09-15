@@ -1,7 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { createContext, useContext, useEffect, useState } from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Customer {
   id: string;
@@ -9,7 +9,7 @@ interface Customer {
   email: string;
   referral_code: string;
   vertical_id: string;
-  role: 'customer' | 'admin';
+  role: "customer" | "admin";
   created_at: string;
   updated_at: string;
 }
@@ -19,7 +19,12 @@ interface AuthContextType {
   session: Session | null;
   customer: Customer | null;
   loading: boolean;
-  signUp: (email: string, password: string, name: string, verticalId: string) => Promise<{ error: any }>;
+  signUp: (
+    email: string,
+    password: string,
+    name: string,
+    verticalId: string
+  ) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshCustomer: () => Promise<void>;
@@ -37,19 +42,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchCustomer = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('id', userId)
+        .from("customers")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       if (error) {
-        console.error('Error fetching customer:', error);
+        console.error("Error fetching customer:", error);
         return;
       }
 
       setCustomer(data);
     } catch (error) {
-      console.error('Error fetching customer:', error);
+      console.error("Error fetching customer:", error);
     }
   };
 
@@ -61,96 +66,107 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Defer customer fetching to prevent deadlock
-        if (session?.user) {
-          setTimeout(() => {
-            fetchCustomer(session.user.id);
-          }, 0);
-        } else {
-          setCustomer(null);
-        }
-        
-        setLoading(false);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      // Defer customer fetching to prevent deadlock
+      if (session?.user) {
+        setTimeout(() => {
+          fetchCustomer(session.user.id);
+        }, 0);
+      } else {
+        setCustomer(null);
       }
-    );
+
+      setLoading(false);
+    });
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         setTimeout(() => {
           fetchCustomer(session.user.id);
         }, 0);
       }
-      
+
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string, verticalId: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    name: string,
+    verticalId: string
+  ) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
+
+      // 🔹 1. Create the auth user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
+        options: { emailRedirectTo: redirectUrl },
       });
 
       if (error) {
         toast({
-          title: 'Sign Up Error',
+          title: "Sign Up Error",
           description: error.message,
-          variant: 'destructive',
+          variant: "destructive",
         });
         return { error };
       }
 
-      if (data.user) {
-        // Generate referral code
-        const { data: codeData } = await supabase.rpc('generate_referral_code');
-        
-        // Create customer profile
-        const { error: profileError } = await supabase
-          .from('customers')
-          .insert({
-            id: data.user.id,
-            name,
-            email,
-            referral_code: codeData || 'TEMP',
-            vertical_id: verticalId,
-            role: 'customer'
-          });
-
-        if (profileError) {
-          console.error('Error creating customer profile:', profileError);
-        }
-
-        toast({
-          title: 'Account Created',
-          description: 'Please check your email to verify your account.',
-        });
+      const user = data.user;
+      if (!user) {
+        return { error: new Error("User was not created") };
       }
 
-      return { error: null };
-    } catch (error: any) {
-      toast({
-        title: 'Sign Up Error',
-        description: error.message,
-        variant: 'destructive',
+      // 🔹 2. Generate referral code from your RPC
+      const { data: codeData, error: codeError } = await supabase.rpc(
+        "generate_referral_code"
+      );
+
+      if (codeError) {
+        console.error("Error generating referral code:", codeError.message);
+      }
+
+      // 🔹 3. Insert new customer profile (manual, no trigger needed)
+      const { error: profileError } = await supabase.from("customers").insert({
+        id: user.id, // matches auth.users.id
+        name,
+        email,
+        vertical_id: verticalId,
+        role: "customer",
+        referral_code: codeData || "TEMP",
       });
-      return { error };
+
+      if (profileError) {
+        console.error("Error creating customer profile:", profileError.message);
+      }
+
+      toast({
+        title: "Account Created",
+        description: "Please check your email to verify your account.",
+      });
+
+      return { error: null };
+    } catch (err: any) {
+      toast({
+        title: "Sign Up Error",
+        description: err.message,
+        variant: "destructive",
+      });
+      return { error: err };
     }
   };
 
@@ -163,24 +179,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         toast({
-          title: 'Sign In Error',
+          title: "Sign In Error",
           description: error.message,
-          variant: 'destructive',
+          variant: "destructive",
         });
         return { error };
       }
 
       toast({
-        title: 'Welcome back!',
-        description: 'You have been signed in successfully.',
+        title: "Welcome back!",
+        description: "You have been signed in successfully.",
       });
 
       return { error: null };
     } catch (error: any) {
       toast({
-        title: 'Sign In Error',
+        title: "Sign In Error",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
       return { error };
     }
@@ -191,21 +207,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) {
         toast({
-          title: 'Sign Out Error',
+          title: "Sign Out Error",
           description: error.message,
-          variant: 'destructive',
+          variant: "destructive",
         });
       } else {
         toast({
-          title: 'Signed out',
-          description: 'You have been signed out successfully.',
+          title: "Signed out",
+          description: "You have been signed out successfully.",
         });
       }
     } catch (error: any) {
       toast({
-        title: 'Sign Out Error',
+        title: "Sign Out Error",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     }
   };
@@ -227,7 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

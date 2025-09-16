@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Gift, Share2, LogOut } from 'lucide-react';
+import { Copy, Gift, Share2, LogOut, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -32,9 +33,11 @@ interface Reward {
 
 export default function Dashboard() {
   const { customer, signOut } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [services, setServices] = useState<Service[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (customer) {
@@ -46,6 +49,7 @@ export default function Dashboard() {
   const fetchServices = async () => {
     if (!customer) return;
     
+    setLoading(true);
     const { data } = await supabase
       .from('services')
       .select(`
@@ -55,6 +59,7 @@ export default function Dashboard() {
       .eq('vertical_id', customer.vertical_id);
     
     if (data) setServices(data);
+    setLoading(false);
   };
 
   const fetchRewards = async () => {
@@ -79,6 +84,10 @@ export default function Dashboard() {
       title: 'Referral link copied!',
       description: 'Share this link with friends to earn rewards.',
     });
+  };
+
+  const handleBookService = (serviceId: string) => {
+    navigate(`/booking?service=${serviceId}`);
   };
 
   const useReward = async (rewardId: string) => {
@@ -153,27 +162,43 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle>Available Services</CardTitle>
             <CardDescription>
-              Services you can refer friends to and earn rewards
+              Services you can refer friends to and book yourself
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {services.map((service) => (
-                <div key={service.id} className="p-4 border rounded-lg">
-                  <h3 className="font-semibold">{service.name}</h3>
-                  <Badge variant="secondary" className="mt-2">
-                    {service.tier}
-                  </Badge>
-                  {service.reward_rules.map((rule, index) => (
-                    <div key={index} className="mt-2 text-sm text-muted-foreground">
-                      <p>Earn {rule.discount_percent}% discount per referral</p>
-                      <p>Max {rule.max_per_month} rewards/month</p>
-                      <p>Expires after {rule.expires_after_months} months</p>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {services.map((service) => (
+                  <div key={service.id} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold">{service.name}</h3>
+                      <Badge variant="secondary">
+                        {service.tier}
+                      </Badge>
                     </div>
-                  ))}
-                </div>
-              ))}
-            </div>
+                    {service.reward_rules.map((rule, index) => (
+                      <div key={index} className="mb-3 text-sm text-muted-foreground">
+                        <p>Earn {rule.discount_percent}% discount per referral</p>
+                        <p>Max {rule.max_per_month} rewards/month</p>
+                        <p>Expires after {rule.expires_after_months} months</p>
+                      </div>
+                    ))}
+                    <Button 
+                      onClick={() => handleBookService(service.id)}
+                      className="w-full mt-2"
+                      size="sm"
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Book Service
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

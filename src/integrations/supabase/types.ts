@@ -14,36 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          booking_date: string
+          created_at: string
+          customer_id: string
+          discount_estimate: number
+          id: string
+          referral_code: string | null
+          service_id: string
+          service_price: number
+          status: string
+          total_estimate: number
+          updated_at: string
+        }
+        Insert: {
+          booking_date?: string
+          created_at?: string
+          customer_id: string
+          discount_estimate?: number
+          id?: string
+          referral_code?: string | null
+          service_id: string
+          service_price: number
+          status?: string
+          total_estimate: number
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string
+          created_at?: string
+          customer_id?: string
+          discount_estimate?: number
+          id?: string
+          referral_code?: string | null
+          service_id?: string
+          service_price?: number
+          status?: string
+          total_estimate?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
           email: string
           id: string
-          name: string
+          name: string | null
           referral_code: string
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
-          vertical_id: string
+          vertical_id: string | null
         }
         Insert: {
           created_at?: string
           email: string
           id: string
-          name: string
-          referral_code: string
+          name?: string | null
+          referral_code?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
-          vertical_id: string
+          vertical_id?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
-          name?: string
+          name?: string | null
           referral_code?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
-          vertical_id?: string
+          vertical_id?: string | null
         }
         Relationships: [
           {

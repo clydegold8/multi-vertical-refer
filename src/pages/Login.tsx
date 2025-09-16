@@ -19,6 +19,10 @@ export default function Login() {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [verticals, setVerticals] = useState<Vertical[]>([]);
+  
+  // Extract referral code from URL
+  const searchParams = new URLSearchParams(location.search);
+  const refCode = searchParams.get('ref');
 
   // Sign In Form
   const [signInEmail, setSignInEmail] = useState('');
@@ -29,6 +33,7 @@ export default function Login() {
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpName, setSignUpName] = useState('');
   const [signUpVertical, setSignUpVertical] = useState('');
+  const [referralCode, setReferralCode] = useState(refCode || '');
 
   useEffect(() => {
     fetchVerticals();
@@ -110,6 +115,13 @@ export default function Login() {
             </TabsContent>
 
             <TabsContent value="signup">
+              {refCode && (
+                <div className="mb-4 p-3 bg-success/10 border border-success/20 rounded-lg">
+                  <p className="text-sm text-success font-medium">
+                    🎉 You're signing up with referral code: <code className="font-mono">{refCode}</code>
+                  </p>
+                </div>
+              )}
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Full Name</Label>
@@ -156,6 +168,18 @@ export default function Login() {
                     </SelectContent>
                   </Select>
                 </div>
+                {refCode && (
+                  <div className="space-y-2">
+                    <Label htmlFor="referral-code">Referral Code (Optional)</Label>
+                    <Input
+                      id="referral-code"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      placeholder="Enter referral code"
+                      className="bg-muted"
+                    />
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={isLoading || !signUpVertical}>
                   {isLoading ? 'Creating Account...' : 'Sign Up'}
                 </Button>

@@ -3,12 +3,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Plus, Edit, Trash2 } from 'lucide-react';
+import { LogOut, Plus, Edit, Trash2, Ban } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceManager } from '@/components/admin/ServiceManager';
 import { RewardRuleManager } from '@/components/admin/RewardRuleManager';
 import { CustomerManager } from '@/components/admin/CustomerManager';
 import { AdminManager } from '@/components/admin/AdminManager';
+import { VerticalManager } from '@/components/admin/VerticalManager';
 
 interface Vertical {
   id: string;
@@ -58,11 +59,12 @@ export default function Admin() {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="services" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="services">Services</TabsTrigger>
             <TabsTrigger value="rewards">Reward Rules</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="admins">Admins</TabsTrigger>
+            <TabsTrigger value="verticals">Verticals</TabsTrigger>
           </TabsList>
 
           <TabsContent value="services">
@@ -117,6 +119,20 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <AdminManager currentVerticalId={customer?.vertical_id || ''} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="verticals">
+            <Card>
+              <CardHeader>
+                <CardTitle>Vertical Management</CardTitle>
+                <CardDescription>
+                  Create and manage service verticals for the platform
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <VerticalManager />
               </CardContent>
             </Card>
           </TabsContent>

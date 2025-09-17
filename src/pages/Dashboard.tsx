@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Copy, Gift, Share2, LogOut, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { BookingList } from '@/components/BookingList';
+import { CustomerProfile } from '@/components/CustomerProfile';
 
 interface Service {
   id: string;
@@ -201,6 +203,12 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Customer Profile Section */}
+        <CustomerProfile />
+
+        {/* Bookings Section */}
+        <BookingList />
 
         {/* Rewards Section */}
         <div className="grid gap-6 md:grid-cols-3">

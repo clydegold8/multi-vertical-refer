@@ -10,6 +10,7 @@ import { RewardRuleManager } from '@/components/admin/RewardRuleManager';
 import { CustomerManager } from '@/components/admin/CustomerManager';
 import { AdminManager } from '@/components/admin/AdminManager';
 import { VerticalManager } from '@/components/admin/VerticalManager';
+import { BookingManager } from '@/components/admin/BookingManager';
 
 interface Vertical {
   id: string;
@@ -59,10 +60,11 @@ export default function Admin() {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="services" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="services">Services</TabsTrigger>
             <TabsTrigger value="rewards">Reward Rules</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
+            <TabsTrigger value="bookings">Bookings</TabsTrigger>
             <TabsTrigger value="admins">Admins</TabsTrigger>
             <TabsTrigger value="verticals">Verticals</TabsTrigger>
           </TabsList>
@@ -105,6 +107,20 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <CustomerManager verticalId={customer?.vertical_id || ''} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="bookings">
+            <Card>
+              <CardHeader>
+                <CardTitle>Booking Management</CardTitle>
+                <CardDescription>
+                  Manage all bookings, approve services, and track status
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BookingManager verticalId={customer?.vertical_id || ''} />
               </CardContent>
             </Card>
           </TabsContent>

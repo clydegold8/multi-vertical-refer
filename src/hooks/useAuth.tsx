@@ -23,7 +23,9 @@ interface AuthContextType {
     email: string,
     password: string,
     name: string,
-    verticalId: string
+    verticalId: string,
+    contactNumber: string,
+    referralCode?: string
   ) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -105,7 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     name: string,
-    verticalId: string
+    verticalId: string,
+    contactNumber: string,
+    referralCode?: string
   ) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -140,15 +144,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error generating referral code:", codeError.message);
       }
 
-      // 🔹 3. Insert new customer profile (manual, no trigger needed)
-      const { error: profileError } = await supabase.from("customers").insert({
+      // Store referral info in separate field for trigger processing
+      const customerData: any = {
         id: user.id, // matches auth.users.id
         name,
         email,
         vertical_id: verticalId,
         role: "customer",
         referral_code: codeData || "TEMP",
-      });
+        contact_number: contactNumber,
+      };
+
+      // Add referral code for trigger processing if provided
+      if (referralCode) {
+        customerData.referral_code = referralCode;
+      }
+
+      const { error: profileError } = await supabase.from("customers").insert(customerData);
 
       if (profileError) {
         console.error("Error creating customer profile:", profileError.message);

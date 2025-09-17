@@ -17,6 +17,7 @@ export type Database = {
       bookings: {
         Row: {
           booking_date: string
+          cancellation_count: number
           created_at: string
           customer_id: string
           discount_estimate: number
@@ -29,7 +30,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          booking_date?: string
+          booking_date: string
+          cancellation_count?: number
           created_at?: string
           customer_id: string
           discount_estimate?: number
@@ -43,6 +45,7 @@ export type Database = {
         }
         Update: {
           booking_date?: string
+          cancellation_count?: number
           created_at?: string
           customer_id?: string
           discount_estimate?: number
@@ -73,6 +76,7 @@ export type Database = {
       }
       customers: {
         Row: {
+          contact_number: string | null
           created_at: string
           email: string
           id: string
@@ -83,6 +87,7 @@ export type Database = {
           vertical_id: string | null
         }
         Insert: {
+          contact_number?: string | null
           created_at?: string
           email: string
           id: string
@@ -93,6 +98,7 @@ export type Database = {
           vertical_id?: string | null
         }
         Update: {
+          contact_number?: string | null
           created_at?: string
           email?: string
           id?: string

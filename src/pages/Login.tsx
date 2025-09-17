@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
 
 interface Vertical {
   id: string;
@@ -33,7 +34,9 @@ export default function Login() {
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpName, setSignUpName] = useState('');
   const [signUpVertical, setSignUpVertical] = useState('');
+  const [signUpContact, setSignUpContact] = useState('');
   const [referralCode, setReferralCode] = useState(refCode || '');
+  const [contactError, setContactError] = useState('');
 
   useEffect(() => {
     fetchVerticals();
@@ -57,12 +60,32 @@ export default function Login() {
     setIsLoading(false);
   };
 
+  const validateContact = (contact: string) => {
+    if (!contact) {
+      setContactError('Contact number is required');
+      return false;
+    }
+    
+    try {
+      if (!isValidPhoneNumber(contact)) {
+        setContactError('Please enter a valid phone number');
+        return false;
+      }
+      setContactError('');
+      return true;
+    } catch {
+      setContactError('Please enter a valid phone number');
+      return false;
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!signUpVertical) return;
+    if (!validateContact(signUpContact)) return;
     
     setIsLoading(true);
-    await signUp(signUpEmail, signUpPassword, signUpName, signUpVertical);
+    await signUp(signUpEmail, signUpPassword, signUpName, signUpVertical, signUpContact, referralCode);
     setIsLoading(false);
   };
 
@@ -154,6 +177,23 @@ export default function Login() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="signup-contact">Contact Number</Label>
+                  <Input
+                    id="signup-contact"
+                    type="tel"
+                    value={signUpContact}
+                    onChange={(e) => {
+                      setSignUpContact(e.target.value);
+                      if (contactError) validateContact(e.target.value);
+                    }}
+                    placeholder="+1 555 123 4567"
+                    required
+                  />
+                  {contactError && (
+                    <p className="text-sm text-destructive">{contactError}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="signup-vertical">Service Vertical</Label>
                   <Select value={signUpVertical} onValueChange={setSignUpVertical} required>
                     <SelectTrigger>
@@ -180,7 +220,7 @@ export default function Login() {
                     />
                   </div>
                 )}
-                <Button type="submit" className="w-full" disabled={isLoading || !signUpVertical}>
+                <Button type="submit" className="w-full" disabled={isLoading || !signUpVertical || !signUpContact}>
                   {isLoading ? 'Creating Account...' : 'Sign Up'}
                 </Button>
               </form>

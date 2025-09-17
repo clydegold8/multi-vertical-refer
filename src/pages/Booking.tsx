@@ -5,9 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Calendar, DollarSign, Percent, Info } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, CalendarIcon, DollarSign, Percent, Info, Gift } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface Service {
   id: string;
@@ -20,12 +25,27 @@ interface Service {
   }[];
 }
 
+interface Reward {
+  id: string;
+  service_id: string;
+  discount_percent: number;
+  used: boolean;
+  expires_at: string;
+  created_at: string;
+  services: {
+    name: string;
+  };
+}
+
 export default function Booking() {
   const { customer } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [service, setService] = useState<Service | null>(null);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [selectedReward, setSelectedReward] = useState<string>('');
+  const [bookingDate, setBookingDate] = useState<Date>();
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
   
@@ -49,6 +69,7 @@ export default function Booking() {
   useEffect(() => {
     if (serviceId) {
       fetchService();
+      fetchRewards();
     } else {
       setLoading(false);
     }
@@ -71,13 +92,45 @@ export default function Booking() {
     setLoading(false);
   };
 
+  const fetchRewards = async () => {
+    if (!customer || !serviceId) return;
+    
+    const { data } = await supabase
+      .from('rewards')
+      .select(`
+        *,
+        services (name)
+      `)
+      .eq('customer_id', customer.id)
+      .eq('service_id', serviceId)
+      .eq('used', false)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+    
+    if (data) setRewards(data);
+  };
+
   const handleBooking = async () => {
-    if (!service || !customer) return;
+    if (!service || !customer || !bookingDate) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please select a booking date before proceeding.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     setBooking(true);
     try {
       const servicePrice = getServicePrice(service.tier);
-      const discountPercent = referralCode ? getDiscountPercent(service) : 0;
+      let discountPercent = referralCode ? getDiscountPercent(service) : 0;
+      
+      // Apply reward discount if selected
+      const selectedRewardData = rewards.find(r => r.id === selectedReward);
+      if (selectedRewardData) {
+        discountPercent = Math.max(discountPercent, selectedRewardData.discount_percent);
+      }
+      
       const discountAmount = servicePrice * (discountPercent / 100);
       const totalEstimate = servicePrice - discountAmount;
 
@@ -90,10 +143,19 @@ export default function Booking() {
           discount_estimate: discountAmount,
           total_estimate: totalEstimate,
           referral_code: referralCode,
-          status: 'pending'
+          status: 'pending',
+          booking_date: bookingDate.toISOString()
         });
 
       if (error) throw error;
+      
+      // Mark reward as used if selected
+      if (selectedRewardData) {
+        await supabase
+          .from('rewards')
+          .update({ used: true })
+          .eq('id', selectedRewardData.id);
+      }
       
       toast({
         title: 'Booking Created!',

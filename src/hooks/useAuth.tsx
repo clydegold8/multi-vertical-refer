@@ -153,11 +153,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: "customer",
         referral_code: codeData || "TEMP",
         contact_number: contactNumber,
+        referred_by: referralCode || null, // store the code they signed up with
       };
 
       // Add referral code for trigger processing if provided
       if (referralCode) {
-        customerData.referral_code = referralCode;
+        customerData.referred_by = referralCode;
       }
 
       const { error: profileError } = await supabase.from("customers").insert(customerData);

@@ -94,14 +94,14 @@ export function BookingManager({ verticalId }: BookingManagerProps) {
       .from('bookings')
       .select('*, services!inner(vertical_id)', { count: 'exact', head: true })
       .eq('services.vertical_id', verticalId)
-      .in('status', ['waiting_service', 'on_service']);
+      .in('status', ['confirmed']);
 
     // Get completed bookings
     const { count: completedCount } = await supabase
       .from('bookings')
       .select('*, services!inner(vertical_id)', { count: 'exact', head: true })
       .eq('services.vertical_id', verticalId)
-      .eq('status', 'finished');
+      .eq('status', 'done');
 
     setStats({
       total_bookings: totalCount || 0,
@@ -114,9 +114,8 @@ export function BookingManager({ verticalId }: BookingManagerProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'secondary';
-      case 'waiting_service': return 'default';
-      case 'on_service': return 'default';
-      case 'finished': return 'secondary';
+      case 'confirmed': return 'default';
+      case 'done': return 'secondary';
       case 'cancelled': return 'destructive';
       default: return 'secondary';
     }
@@ -125,9 +124,8 @@ export function BookingManager({ verticalId }: BookingManagerProps) {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending': return 'Pending';
-      case 'waiting_service': return 'Waiting Service';
-      case 'on_service': return 'On Service';
-      case 'finished': return 'Finished';
+      case 'confirmed': return 'Confirmed';
+      case 'done': return 'Done';
       case 'cancelled': return 'Cancelled';
       default: return status;
     }
@@ -135,10 +133,10 @@ export function BookingManager({ verticalId }: BookingManagerProps) {
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('bookings')
         .update({ status: newStatus })
-        .eq('id', bookingId);
+        .eq('id', bookingId)
 
       if (error) throw error;
       
@@ -159,21 +157,22 @@ export function BookingManager({ verticalId }: BookingManagerProps) {
   };
 
   const handleApproveBooking = async (bookingId: string) => {
-    await handleStatusChange(bookingId, 'waiting_service');
+    await handleStatusChange(bookingId, 'confirmed');
   };
 
   const handleCompleteBooking = async (bookingId: string) => {
-    await handleStatusChange(bookingId, 'finished');
+    await handleStatusChange(bookingId, 'done');
   };
 
   const handleDeleteBooking = async (bookingId: string) => {
     if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) return;
     
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('bookings')
         .delete()
-        .eq('id', bookingId);
+        .eq('id', bookingId)
+        .select();
 
       if (error) throw error;
       
@@ -316,9 +315,8 @@ export function BookingManager({ verticalId }: BookingManagerProps) {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="waiting_service">Waiting Service</SelectItem>
-                              <SelectItem value="on_service">On Service</SelectItem>
-                              <SelectItem value="finished">Finished</SelectItem>
+                               <SelectItem value="confirmed">Confirmed</SelectItem>
+                              <SelectItem value="done">Done</SelectItem>
                               <SelectItem value="cancelled">Cancelled</SelectItem>
                             </SelectContent>
                           </Select>
@@ -346,7 +344,7 @@ export function BookingManager({ verticalId }: BookingManagerProps) {
                                 <Check className="w-4 h-4" />
                               </Button>
                             )}
-                            {(booking.status === 'waiting_service' || booking.status === 'on_service') && (
+                            {(booking.status === 'confirmed' || booking.status === 'on_service') && (
                               <Button
                                 size="sm"
                                 variant="outline"

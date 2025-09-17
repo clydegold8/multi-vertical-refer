@@ -55,12 +55,12 @@ export function BookingList() {
     setLoading(false);
   };
 
+  //variant?: "default" | "destructive" | "secondary" | "outline"
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'secondary';
-      case 'waiting_service': return 'default';
-      case 'on_service': return 'default';
-      case 'finished': return 'secondary';
+      case 'pending': return 'outline';
+      case 'confirmed': return 'secondary';
+      case 'done': return 'default';
       case 'cancelled': return 'destructive';
       default: return 'secondary';
     }
@@ -69,9 +69,8 @@ export function BookingList() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending': return 'Pending';
-      case 'waiting_service': return 'Waiting Service';
-      case 'on_service': return 'On Service';
-      case 'finished': return 'Finished';
+      case 'confirmed': return 'Confirmed';
+      case 'done': return 'Done';
       case 'cancelled': return 'Cancelled';
       default: return status;
     }
